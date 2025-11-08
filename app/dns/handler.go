@@ -11,8 +11,10 @@ func Handler(ctx *udp_server.PacketContext) {
 		ctx.Logger.Println("Error decoding header:", err)
 		return
 	}
+	ctx.Logger.Printf("request header: %s", requestHeader)
 
-	responseHeader := Header{
+	// Build the response header
+	responseHeader := &Header{
 		Id:      requestHeader.Id,
 		Qr:      true,
 		OpCode:  requestHeader.OpCode,
@@ -21,6 +23,8 @@ func Handler(ctx *udp_server.PacketContext) {
 		QdCount: 1,
 		AnCount: 1,
 	}
+	ctx.Logger.Printf("response header: %s", responseHeader)
+
 	// Build the response message
 	message := append(responseHeader.Encode(), CodecraftersQuestion().Encode()...)
 	message = append(message, CodecraftersAnswer().Encode()...)

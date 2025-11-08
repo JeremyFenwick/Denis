@@ -3,6 +3,7 @@
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 )
 
 type Header struct {
@@ -91,4 +92,11 @@ func (header *Header) getFlags() uint16 {
 	// RCode
 	flags |= uint16(header.RCode & 0xF) // Mask to 4 bits
 	return flags
+}
+
+func (header *Header) String() string {
+	return fmt.Sprintf(
+		"Header{ID: %d, QR: %t, OpCode: %d, AA: %t, TC: %t, RD: %t, RA: %t, Z: %d, RCode: %d, QDCount: %d, ANCount: %d, NSCount: %d, ARCount: %d}",
+		header.Id, header.Qr, header.OpCode, header.Aa, header.Tc, header.Rd, header.Ra, header.Z, header.RCode, header.QdCount, header.AnCount, header.NsCount, header.ArCount,
+	)
 }
