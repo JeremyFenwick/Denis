@@ -20,8 +20,11 @@ type DnsHeader struct {
 
 func (header *DnsHeader) Encode() []byte {
 	data := make([]byte, 12)
+	// ID section
 	binary.BigEndian.PutUint16(data[0:2], header.Id)
+	// Flag section
 	binary.BigEndian.PutUint16(data[2:4], header.getFlags())
+	// Question section
 	binary.BigEndian.PutUint16(data[4:6], header.QdCount)
 	binary.BigEndian.PutUint16(data[6:8], header.AnCount)
 	binary.BigEndian.PutUint16(data[8:10], header.NsCount)
@@ -50,6 +53,8 @@ func Decode(data []byte) *DnsHeader {
 	header.ArCount = binary.BigEndian.Uint16(data[10:12])
 	return header
 }
+
+// Helper functions
 func (header *DnsHeader) getFlags() uint16 {
 	var flags uint16
 	// Qr
