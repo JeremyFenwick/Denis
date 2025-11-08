@@ -1,6 +1,9 @@
 ﻿package dns
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 type Answer struct {
 	Labels []string // Together this forms the domain name
@@ -48,6 +51,12 @@ func (answer *Answer) Encode() []byte {
 	copy(data[index:], answer.Data)
 
 	return data
+}
+
+func (answer *Answer) String() string {
+	return fmt.Sprintf(
+		"Answer{Labels: %s, Type: %d, Class: %d, TTL: %d, Length: %d, Data: %s}",
+		answer.Labels, answer.Type, answer.Class, answer.TTL, answer.Length, answer.Data)
 }
 
 func CodecraftersAnswer() *Answer {
