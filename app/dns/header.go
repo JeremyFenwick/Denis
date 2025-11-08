@@ -1,6 +1,9 @@
 ﻿package dns
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"errors"
+)
 
 type Header struct {
 	Id      uint16 // Packet ID
@@ -32,7 +35,10 @@ func (header *Header) Encode() []byte {
 	return data
 }
 
-func Decode(data []byte) *Header {
+func HeaderDecode(data []byte) (*Header, error) {
+	if len(data) < 12 {
+		return nil, errors.New("provided header is too small")
+	}
 	header := &Header{}
 	// ID section
 	header.Id = binary.BigEndian.Uint16(data[0:2])
@@ -51,7 +57,8 @@ func Decode(data []byte) *Header {
 	header.AnCount = binary.BigEndian.Uint16(data[6:8])
 	header.NsCount = binary.BigEndian.Uint16(data[8:10])
 	header.ArCount = binary.BigEndian.Uint16(data[10:12])
-	return header
+
+	return header, nil
 }
 
 // Helper functions
