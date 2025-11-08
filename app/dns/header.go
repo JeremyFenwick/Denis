@@ -1,8 +1,8 @@
-﻿package main
+﻿package dns
 
 import "encoding/binary"
 
-type DnsHeader struct {
+type Header struct {
 	Id      uint16 // Packet ID
 	Qr      bool   // Query/Response Indicator
 	OpCode  uint8  // Operation Code
@@ -18,7 +18,7 @@ type DnsHeader struct {
 	ArCount uint16 // Additional Record Count
 }
 
-func (header *DnsHeader) Encode() []byte {
+func (header *Header) Encode() []byte {
 	data := make([]byte, 12)
 	// ID section
 	binary.BigEndian.PutUint16(data[0:2], header.Id)
@@ -32,8 +32,8 @@ func (header *DnsHeader) Encode() []byte {
 	return data
 }
 
-func Decode(data []byte) *DnsHeader {
-	header := &DnsHeader{}
+func Decode(data []byte) *Header {
+	header := &Header{}
 	// ID section
 	header.Id = binary.BigEndian.Uint16(data[0:2])
 	// Flag section
@@ -55,7 +55,7 @@ func Decode(data []byte) *DnsHeader {
 }
 
 // Helper functions
-func (header *DnsHeader) getFlags() uint16 {
+func (header *Header) getFlags() uint16 {
 	var flags uint16
 	// Qr
 	if header.Qr {

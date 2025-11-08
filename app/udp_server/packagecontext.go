@@ -1,4 +1,4 @@
-﻿package server
+﻿package udp_server
 
 import (
 	"log"

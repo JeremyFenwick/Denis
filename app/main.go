@@ -2,20 +2,17 @@ package main
 
 import (
 	"log"
-	"net"
 	"os"
 
-	"github.com/codecrafters-io/dns-server-starter-go/app/server"
+	"github.com/codecrafters-io/dns-server-starter-go/app/dns"
+	"github.com/codecrafters-io/dns-server-starter-go/app/udp_server"
 )
-
-// Ensures gofmt doesn't remove the "net" import in stage 1 (feel free to remove this!)
-var _ = net.ListenUDP
 
 func main() {
 	logger := log.New(os.Stdout, "[DNS Server] ", log.LstdFlags)
-	udpServer, err := server.NewUdpServer("127.0.0.1:2053", logger, DnsHandler)
+	udpServer, err := udp_server.NewUdpServer("127.0.0.1:2053", logger, dns.Handler)
 	if err != nil {
-		logger.Fatal("> Error creating UDP server:", err)
+		logger.Fatal("> Error creating UDP udp_server:", err)
 	}
 	udpServer.Listen()
 }
