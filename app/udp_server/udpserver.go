@@ -5,6 +5,7 @@ import (
 	"net"
 )
 
+// UdpServer - handler function, then listens for incoming packets
 type UdpServer struct {
 	conn       *net.UDPConn
 	bufferSize int

@@ -6,7 +6,7 @@ import (
 )
 
 type Answer struct {
-	Labels []string // Together this forms the domain name
+	Label  Label // Together this forms the domain name
 	Type   uint16
 	Class  uint16
 	TTL    uint32
@@ -14,19 +14,16 @@ type Answer struct {
 	Data   []byte
 }
 
-func (answer *Answer) Encode() []byte {
+func (answer *Answer) Encode() ([]byte, error) {
 	data := make([]byte, answer.byteSize())
 	index := 0
-	// Add the labels
-	for _, label := range answer.Labels {
-		// Add the label length
-		data[index] = byte(len(label))
-		index++
-		// Add the label data
-		copy(data[index:], label)
-		index += len(label)
-	}
 
+	// Add the labels
+	bytesUsed, err := answer.Label.encode(data)
+	if err != nil {
+		return nil, err
+	}
+	index += bytesUsed
 	// Add the null terminator
 	data[index] = 0x00
 	index++
@@ -50,18 +47,18 @@ func (answer *Answer) Encode() []byte {
 	// Add the answer data
 	copy(data[index:], answer.Data)
 
-	return data
+	return data, nil
 }
 
 func (answer *Answer) String() string {
 	return fmt.Sprintf(
 		"Answer{Labels: %s, Type: %d, Class: %d, TTL: %d, Length: %d, Data: %s}",
-		answer.Labels, answer.Type, answer.Class, answer.TTL, answer.Length, answer.Data)
+		answer.Label, answer.Type, answer.Class, answer.TTL, answer.Length, answer.Data)
 }
 
 func CodecraftersAnswer() *Answer {
 	return &Answer{
-		Labels: []string{"codecrafters", "io"},
+		Label:  NewLabel([]string{"codecrafters", "io"}),
 		Type:   1,
 		Class:  1,
 		TTL:    60,
@@ -73,11 +70,7 @@ func CodecraftersAnswer() *Answer {
 func (answer *Answer) byteSize() int {
 	res := 0
 	// Get the labels
-	for _, label := range answer.Labels {
-		res += len(label) + 1
-	}
-	// Add the null terminator
-	res++
+	res += answer.Label.ByteSize()
 	// Add the type, class, TTL and length
 	res += 10
 	// Add the data

@@ -5,6 +5,7 @@ import (
 	"net"
 )
 
+// PacketContext - context for the handler function required by the udp server
 type PacketContext struct {
 	Data    []byte
 	Address *net.UDPAddr
