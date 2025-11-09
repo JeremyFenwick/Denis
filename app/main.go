@@ -13,9 +13,10 @@ func main() {
 	resolver := flag.String("resolver", "", "DNS resolver address (ip:port)")
 	flag.Parse()
 
+	// Setup the logger
 	logger := log.New(os.Stdout, "[DNS Server] ", log.LstdFlags)
-	logger.Printf("Command-line arguments: %v", os.Args)
 
+	// UDP server config
 	config := udp_server.Config{
 		Address: "127.0.0.1:2053",
 		Logger:  logger,
@@ -30,6 +31,7 @@ func main() {
 		logger.Println("Running in simple mode (no forwarding)")
 	}
 
+	// Create and start the server
 	udpServer, err := udp_server.NewUdpServer(config)
 	if err != nil {
 		logger.Fatal("Error creating UDP server: ", err)
