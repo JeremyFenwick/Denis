@@ -21,16 +21,29 @@ func AnswerDecode(data []byte, start int) (*Answer, int, error) {
 	}
 
 	index := start + bytesUsed
+
+	// Make sure we have enough data for the fixed fields
+	if len(data) < index+10 {
+		return nil, 0, fmt.Errorf("insufficient data for answer fixed fields")
+	}
+
+	length := binary.BigEndian.Uint16(data[index+8:])
+
+	// Make sure we have enough data for the Data field
+	if len(data) < index+10+int(length) {
+		return nil, 0, fmt.Errorf("insufficient data for answer data field")
+	}
+
 	answer := &Answer{
 		Label:  label,
 		Type:   binary.BigEndian.Uint16(data[index:]),
 		Class:  binary.BigEndian.Uint16(data[index+2:]),
 		TTL:    binary.BigEndian.Uint32(data[index+4:]),
-		Length: binary.BigEndian.Uint16(data[index+8:]),
-		Data:   data[index+10:],
+		Length: length,
+		Data:   data[index+10 : index+10+int(length)], // Only read Length bytes!
 	}
 
-	return answer, index + bytesUsed + 10 + len(answer.Data), nil
+	return answer, bytesUsed + 10 + int(answer.Length), nil
 }
 
 func (answer *Answer) Encode() ([]byte, error) {

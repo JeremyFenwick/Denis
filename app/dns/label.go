@@ -8,7 +8,8 @@ import (
 type Label []string
 
 func LabelDecode(data []byte, start int) (Label, int, error) {
-	label, consumed, err := decoderLoop(start, data)
+	visited := make(map[int]bool)
+	label, consumed, err := decoderLoop(start, data, visited)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -35,8 +36,14 @@ func NewLabel(entries []string) Label {
 	return Label(entries)
 }
 
-// Recursive function. This could blow up from a malicious request
-func decoderLoop(start int, data []byte) (Label, int, error) {
+// decoderLoop now takes a visited map to detect cycles
+func decoderLoop(start int, data []byte, visited map[int]bool) (Label, int, error) {
+	// Check for cycles - if we've already visited this offset, we have a circular reference
+	if visited[start] {
+		return nil, 0, fmt.Errorf("circular pointer detected at offset %d", start)
+	}
+	visited[start] = true
+
 	index := start
 	content := make([]string, 0)
 
@@ -51,9 +58,18 @@ func decoderLoop(start int, data []byte) (Label, int, error) {
 		}
 		// Follow a pointer
 		if data[index]&0xC0 == 0xC0 {
+			if index+1 >= len(data) {
+				return nil, 0, errors.New("pointer extends beyond data")
+			}
 			offset := getLocation(data[index], data[index+1])
-			toAdd, _, err := decoderLoop(offset, data)
-			fmt.Printf("Following pointer at index %d to offset %d (data len: %d)\n", index, offset, len(data))
+
+			// Validate pointer offset
+			if offset >= len(data) {
+				return nil, 0, fmt.Errorf("pointer offset %d exceeds data length %d", offset, len(data))
+			}
+			// DNS pointers should typically point backward, but we'll just rely on cycle detection
+
+			toAdd, _, err := decoderLoop(offset, data, visited)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -65,12 +81,24 @@ func decoderLoop(start int, data []byte) (Label, int, error) {
 		// Get the length
 		length := int(data[index])
 		index++
+
+		// Validate length doesn't exceed remaining data
+		if index+length > len(data) {
+			return nil, 0, fmt.Errorf("label length %d exceeds remaining data at index %d", length, index)
+		}
+
+		// Validate label length (DNS labels max 63 bytes)
+		if length > 63 {
+			return nil, 0, fmt.Errorf("label length %d exceeds maximum of 63 bytes", length)
+		}
+
 		content = append(content, string(data[index:index+length]))
 		index += length
 	}
 
 	return content, index - start, nil
 }
+
 func getLocation(first byte, second byte) int {
 	return (int(first&0x3F) << 8) | int(second)
 }
