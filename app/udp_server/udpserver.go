@@ -69,7 +69,7 @@ func (server *UdpServer) Listen() {
 		// Get the packet
 		bytesRead, address, err := server.conn.ReadFromUDP(buffer)
 		if err != nil {
-			server.logger.Println("Error receiving data:", err)
+			server.logger.Printf("Error receiving data: %s", err)
 			break
 		}
 		server.logger.Printf("Recieved %d bytes from %s", bytesRead, address)
