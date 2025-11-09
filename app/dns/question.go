@@ -53,14 +53,6 @@ func QuestionDecode(data []byte, start int) (*Question, int, error) {
 	return question, bytesUsed + 4, nil
 }
 
-func CodecraftersQuestion() *Question {
-	return &Question{
-		Label: NewLabel([]string{"codecrafters", "io"}),
-		Type:  1,
-		Class: 1,
-	}
-}
-
 func (question *Question) String() string {
 	return fmt.Sprintf("Question{Labels: %s, Type: %d, Class: %d}", question.Label, question.Type, question.Class)
 }

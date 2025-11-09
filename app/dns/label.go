@@ -35,6 +35,7 @@ func NewLabel(entries []string) Label {
 	return Label(entries)
 }
 
+// Recursive function. This could blow up from a malicious request
 func decoderLoop(start int, data []byte) (Label, int, error) {
 	index := start
 	content := make([]string, 0)

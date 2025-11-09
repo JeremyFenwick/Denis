@@ -14,6 +14,25 @@ type Answer struct {
 	Data   []byte
 }
 
+func AnswerDecode(data []byte, start int) (*Answer, int, error) {
+	label, bytesUsed, err := LabelDecode(data, start)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	index := start + bytesUsed
+	answer := &Answer{
+		Label:  label,
+		Type:   binary.BigEndian.Uint16(data[index:]),
+		Class:  binary.BigEndian.Uint16(data[index+2:]),
+		TTL:    binary.BigEndian.Uint32(data[index+4:]),
+		Length: binary.BigEndian.Uint16(data[index+8:]),
+		Data:   data[index+10:],
+	}
+
+	return answer, index + bytesUsed + 10 + len(answer.Data), nil
+}
+
 func (answer *Answer) Encode() ([]byte, error) {
 	data := make([]byte, answer.byteSize())
 	index := 0
@@ -54,17 +73,6 @@ func (answer *Answer) String() string {
 	return fmt.Sprintf(
 		"Answer{Labels: %s, Type: %d, Class: %d, TTL: %d, Length: %d, Data: %s}",
 		answer.Label, answer.Type, answer.Class, answer.TTL, answer.Length, answer.Data)
-}
-
-func CodecraftersAnswer() *Answer {
-	return &Answer{
-		Label:  NewLabel([]string{"codecrafters", "io"}),
-		Type:   1,
-		Class:  1,
-		TTL:    60,
-		Length: 4,
-		Data:   []byte{8, 8, 8, 8},
-	}
 }
 
 func (answer *Answer) byteSize() int {
