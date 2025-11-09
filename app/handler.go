@@ -130,17 +130,23 @@ func forwardRequests(header *dns.Header, questions []*dns.Question, ctx *udp_ser
 
 		ctx.Logger.Printf("Received %d bytes from forwarder", len(response))
 
-		// Parse the answer from the response
-		answers, rcode, err := parseAnswersFromResponse(response)
+		// Parse the response header to get RCode
+		responseHeader, err := dns.HeaderDecode(response)
+		if err != nil {
+			return nil, 0, fmt.Errorf("error decoding response header: %w", err)
+		}
+
+		// Parse the answers from the response
+		answers, err := parseAnswersFromResponse(response, responseHeader)
 		if err != nil {
 			return nil, 0, fmt.Errorf("error parsing response: %w", err)
 		}
 
-		ctx.Logger.Printf("Parsed %d answers with RCode=%d", len(answers), rcode)
+		ctx.Logger.Printf("Parsed %d answers with RCode=%d", len(answers), responseHeader.RCode)
 
 		// Use the RCode from the first response (or you could use the last non-zero one)
-		if i == 0 || rcode != 0 {
-			finalRCode = rcode
+		if i == 0 || responseHeader.RCode != 0 {
+			finalRCode = responseHeader.RCode
 		}
 
 		// Collect all answers
@@ -150,37 +156,31 @@ func forwardRequests(header *dns.Header, questions []*dns.Question, ctx *udp_ser
 	return allAnswers, finalRCode, nil
 }
 
-func parseAnswersFromResponse(response []byte) ([]*dns.Answer, uint8, error) {
-	// Decode the response header
-	responseHeader, err := dns.HeaderDecode(response)
-	if err != nil {
-		return nil, 0, fmt.Errorf("error decoding response header: %w", err)
-	}
-
+func parseAnswersFromResponse(response []byte, header *dns.Header) ([]*dns.Answer, error) {
 	// Skip the header (12 bytes)
 	index := 12
 
 	// Skip the question section
-	for i := 0; i < int(responseHeader.QdCount); i++ {
+	for i := 0; i < int(header.QdCount); i++ {
 		_, bytesUsed, err := dns.QuestionDecode(response, index)
 		if err != nil {
-			return nil, 0, fmt.Errorf("error decoding question: %w", err)
+			return nil, fmt.Errorf("error decoding question: %w", err)
 		}
 		index += bytesUsed
 	}
 
 	// Decode the answer section
-	answers := make([]*dns.Answer, responseHeader.AnCount)
-	for i := 0; i < int(responseHeader.AnCount); i++ {
+	answers := make([]*dns.Answer, header.AnCount)
+	for i := 0; i < int(header.AnCount); i++ {
 		answer, bytesUsed, err := dns.AnswerDecode(response, index)
 		if err != nil {
-			return nil, 0, fmt.Errorf("error decoding answer: %w", err)
+			return nil, fmt.Errorf("error decoding answer: %w", err)
 		}
 		answers[i] = answer
 		index += bytesUsed
 	}
 
-	return answers, responseHeader.RCode, nil
+	return answers, nil
 }
 
 func parseRequest(ctx *udp_server.PacketContext) (*dns.Header, []*dns.Question, error) {
